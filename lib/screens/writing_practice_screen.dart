@@ -4,7 +4,9 @@ import '../core/database/database_service.dart';
 import '../data/han_character.dart';
 import '../data/models/cjk_character.dart';
 import '../services/tts_service.dart';
+import '../state/app_state.dart';
 import '../widgets/hanzi_canvas.dart';
+import '../widgets/multilingual_audio_bar.dart';
 
 const Color _kGreen = Color(0xFF28664F);
 const Color _kGreenLight = Color(0xFFE4F1E8);
@@ -14,11 +16,13 @@ const Color _kRed = Color(0xFFD94343);
 class WritingPracticeScreen extends StatefulWidget {
   final HanCharacter character;
   final DatabaseService? databaseService;
+  final AppState? appState;
 
   const WritingPracticeScreen({
     super.key,
     required this.character,
     this.databaseService,
+    this.appState,
   });
 
   @override
@@ -72,9 +76,9 @@ class _WritingPracticeScreenState extends State<WritingPracticeScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Phát âm tiếng Trung (Pinyin)',
+            tooltip: 'Nghe âm Hán-Việt',
             icon: const Icon(Icons.volume_up_rounded, color: _kGreen, size: 26),
-            onPressed: () => TtsService.instance.speakChinese(char.character),
+            onPressed: () => TtsService.instance.speakVietnamese(char.hanVietReading),
           ),
           const SizedBox(width: 6),
         ],
@@ -132,18 +136,6 @@ class _WritingPracticeScreenState extends State<WritingPracticeScreen> {
                                 onTap: () => TtsService.instance.speakVietnamese(char.hanVietReading),
                                 child: const Icon(Icons.volume_down_rounded, size: 20, color: _kOrange),
                               ),
-                              if (_cjkRecord?.readingsPinyin.isNotEmpty ?? false) ...[
-                                const SizedBox(width: 10),
-                                Text(
-                                  _cjkRecord!.readingsPinyin.first,
-                                  style: const TextStyle(fontSize: 14, color: _kGreen, fontWeight: FontWeight.w800),
-                                ),
-                                const SizedBox(width: 4),
-                                InkWell(
-                                  onTap: () => TtsService.instance.speakChinese(char.character),
-                                  child: const Icon(Icons.volume_up_rounded, size: 18, color: _kGreen),
-                                ),
-                              ],
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -159,8 +151,15 @@ class _WritingPracticeScreenState extends State<WritingPracticeScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 10),
+              MultilingualAudioBar(
+                character: char,
+                cjkRecord: _cjkRecord,
+                appState: widget.appState,
+                compact: true,
+              ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
               // Khung luyện viết thư pháp
               HanziCanvas(

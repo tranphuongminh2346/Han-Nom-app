@@ -39,9 +39,20 @@
    - Trả lời sai sẽ bị chớp đỏ màn hình và trừ ngay 2 giây.
    - Lưu trữ kỷ lục điểm số cao nhất (High Score) vào `SharedPreferences`, thưởng XP và Đá quý sau mỗi trận đấu.
 
-5. 🔊 **Hệ thống phát âm TTS đa ngữ & Luyện viết**:
-   - Nghe âm Hán-Việt chuẩn và tiếng Quan thoại (Pinyin) mọi lúc trên Từ điển, Thẻ chữ và Flashcard.
-   - Tùy chỉnh độ mờ chữ mẫu, nút Lùi nét (Undo) và Xóa nét (Clear) trên bảng vẽ ô Mễ.
+5. 🖌️ **Luyện viết nét chữ trực tiếp trong bài học (In-Lesson Writing Practice)**:
+   - Trong mỗi bài học (Phần 1 & Phần 2), sau khi được giới thiệu một chữ mới, người học sẽ có ngay một câu hỏi luyện viết chữ đó.
+   - Bảng vẽ ô Mễ (米字格) xuất hiện trực quan ngay trong luồng bài học. Người học có thể nhấn **"▶️ Xem cách viết (Bút thuận)"** để xem máy hướng dẫn từng nét trước, sau đó dùng ngón tay/chuột để đồ theo nét chữ.
+   - Hỗ trợ đổi độ mờ chữ mẫu (Mờ/Rõ/Ẩn), nút Lùi nét (Undo) và Xóa hết (Clear).
+   - Đã viết xong bấm nút tiếp tục sang các câu hỏi trắc nghiệm và ôn tập tiếp theo.
+
+6. 🔊 **Hệ thống phát âm đa ngôn ngữ (Multilingual Speech System — 5 ngôn ngữ)**:
+   - Tích hợp thanh phát âm đa ngữ thông minh `MultilingualAudioBar` xuất hiện xuyên suốt trong bài học, thẻ từ mới, thẻ chi tiết chữ và flashcard.
+   - Hỗ trợ phát âm 5 thứ tiếng chỉ với 1 cú chạm:
+     - 🇻🇳 **Hán-Việt**: Phát âm âm Hán-Việt chuẩn tiếng Việt (vd: "Nhất", "Bằng hữu", "Nhật nguyệt quang minh").
+     - 🇨🇳 **Pinyin (Quan thoại)**: Phát âm tiếng Trung phổ thông (vd: "yī", "péngyou").
+     - 🇯🇵 **On'yomi (Tiếng Nhật)**: Phát âm âm Hán-Nhật (vd: "ichi", "yuujin").
+     - 🇰🇷 **Hanja (Tiếng Hàn)**: Phát âm âm Hán-Hàn (vd: "il", "bung-u").
+     - 🇭🇰 **Quảng Đông (Cantonese / Jyutping)**: Phát âm tiếng Quảng Đông truyền thống.
 
 ---
 

@@ -6,6 +6,7 @@ import '../data/han_character.dart';
 import '../data/models/cjk_character.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../widgets/multilingual_audio_bar.dart';
 import '../widgets/type_badge.dart';
 import 'writing_practice_screen.dart';
 
@@ -26,14 +27,14 @@ class CharacterDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.brush_rounded, color: kGreen),
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService),
+                builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService, appState: appState),
               ));
             },
           ),
           IconButton(
-            tooltip: 'Phát âm tiếng Trung (Pinyin)',
+            tooltip: 'Nghe âm Hán-Việt',
             icon: const Icon(Icons.volume_up_rounded, color: kGreen),
-            onPressed: () => TtsService.instance.speakChinese(character.character),
+            onPressed: () => TtsService.instance.speakVietnamese(character.hanVietReading),
           ),
           const SizedBox(width: 8),
         ],
@@ -64,6 +65,18 @@ class CharacterDetailScreen extends StatelessWidget {
                     onPressed: () => TtsService.instance.speakVietnamese(character.hanVietReading),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              FutureBuilder<CjkCharacter?>(
+                future: databaseService?.getCjkCharacter(character.character),
+                builder: (context, snapshot) {
+                  return MultilingualAudioBar(
+                    character: character,
+                    cjkRecord: snapshot.data,
+                    appState: appState,
+                    compact: false,
+                  );
+                },
               ),
               if (!character.isNom && appState.supplementaryLanguage != SupplementaryLanguage.none) ...[
                 const SizedBox(height: 12),
@@ -121,9 +134,17 @@ class CharacterDetailScreen extends StatelessWidget {
                                     icon: const Icon(Icons.volume_up_rounded, color: kGreen, size: 20),
                                     onPressed: () {
                                       if (language == SupplementaryLanguage.mandarin) {
-                                        TtsService.instance.speakChinese(displayChar);
+                                        final pinyin = record.readingsPinyin.isNotEmpty ? record.readingsPinyin.first : displayChar;
+                                        TtsService.instance.speakChinese(pinyin);
                                       } else if (language == SupplementaryLanguage.japanese) {
-                                        TtsService.instance.speakJapanese(displayChar);
+                                        final onyomi = record.readingsOnyomi.isNotEmpty ? record.readingsOnyomi.first : displayChar;
+                                        TtsService.instance.speakJapanese(onyomi);
+                                      } else if (language == SupplementaryLanguage.hanja) {
+                                        final hanja = record.readingsHanja.isNotEmpty ? record.readingsHanja.first : displayChar;
+                                        TtsService.instance.speakKorean(hanja);
+                                      } else if (language == SupplementaryLanguage.cantonese) {
+                                        final jyutping = record.readingsJyutping.isNotEmpty ? record.readingsJyutping.first : displayChar;
+                                        TtsService.instance.speakCantonese(jyutping);
                                       }
                                     },
                                   ),
@@ -150,7 +171,7 @@ class CharacterDetailScreen extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService),
+                    builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService, appState: appState),
                   ));
                 },
                 icon: const Icon(Icons.brush_rounded, size: 19),
@@ -242,7 +263,7 @@ class CharacterDetailScreen extends StatelessWidget {
             ),
             onPressed: () {
               Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService),
+                builder: (_) => WritingPracticeScreen(character: character, databaseService: databaseService, appState: appState),
               ));
             },
             icon: const Icon(Icons.brush_rounded, size: 20),

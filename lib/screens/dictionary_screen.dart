@@ -243,7 +243,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                                         Expanded(child: Text(character.isNom ? 'Cách đọc: ${character.hanVietReading}' : character.hanVietReading.toUpperCase(), style: const TextStyle(fontSize: 15, letterSpacing: 0.2, fontWeight: FontWeight.w900, color: Color(0xFF20372C)))),
                                         const SizedBox(width: 4),
                                         InkWell(
-                                          onTap: () => TtsService.instance.speakChinese(character.character),
+                                          onTap: () => TtsService.instance.speakVietnamese(character.hanVietReading),
                                           borderRadius: BorderRadius.circular(12),
                                           child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.volume_up_rounded, size: 18, color: kGreen)),
                                         ),

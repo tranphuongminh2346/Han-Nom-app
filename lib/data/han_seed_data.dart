@@ -1242,6 +1242,16 @@ List<Question> generateLessonPartQuestions(
         mnemonic: character.mnemonic,
         characterType: character.type,
       ));
+      questions.add(Question(
+        type: QuestionType.writingPractice,
+        sectionTitle: '$partName · Luyện viết nét chữ',
+        prompt: 'Tập viết chữ “${character.character}” (${character.hanVietReading})',
+        options: const <String>[],
+        correctAnswer: '__writing_completed__',
+        associatedCharacter: character.character,
+        mnemonic: character.mnemonic,
+        characterType: character.type,
+      ));
       questions.add(makeReadingQuestion(character));
       questions.add(makeCharacterQuestion(character));
     }

@@ -32,3 +32,8 @@ migrate_working_dir/
 # Local batch helpers
 commit_and_push.bat
 sync_new_version.bat
+push_to_github.bat
+
+# AI agents logs and handoffs
+.agents/
+

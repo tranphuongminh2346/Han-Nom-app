@@ -11,8 +11,10 @@ import '../services/ad_service.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
 import '../widgets/fill_in_the_blank_widget.dart';
+import '../widgets/hanzi_canvas.dart';
 import '../widgets/introduce_word_widget.dart';
 import '../widgets/matching_pairs_widget.dart';
+import '../widgets/multilingual_audio_bar.dart';
 import '../widgets/stats_widgets.dart';
 import '../widgets/translate_sentence_widget.dart';
 import '../widgets/type_badge.dart';
@@ -65,6 +67,9 @@ class _LessonScreenState extends State<LessonScreen> {
   bool _matchingMistakeCharged = false;
   final Set<String> _correctCharacters = {};
   final TextEditingController _typingController = TextEditingController();
+  final GlobalKey<HanziCanvasState> _writingCanvasKey = GlobalKey<HanziCanvasState>();
+  double _writingTemplateOpacity = 0.25;
+  int _writingStrokeCount = 0;
 
   Question get _question => _questions[_questionIndex];
 
@@ -185,12 +190,15 @@ class _LessonScreenState extends State<LessonScreen> {
     final isTypingQuestion = _question.type == QuestionType.typing ||
         _question.type == QuestionType.typingSentenceMeaning ||
         _question.type == QuestionType.typingSentenceReading;
-    final correct = isTypingQuestion
-        ? accepted.contains(typed) || typed == _normalizeAnswer(_question.correctAnswer)
-        : (_question.type == QuestionType.translateSentence ||
-                _question.type == QuestionType.translateHanVietToCharacter)
-            ? typed == _normalizeAnswer(_question.correctAnswer)
-            : _selectedOption == _question.correctAnswer;
+    final isWritingQuestion = _question.type == QuestionType.writingPractice;
+    final correct = isWritingQuestion
+        ? true
+        : isTypingQuestion
+            ? accepted.contains(typed) || typed == _normalizeAnswer(_question.correctAnswer)
+            : (_question.type == QuestionType.translateSentence ||
+                    _question.type == QuestionType.translateHanVietToCharacter)
+                ? typed == _normalizeAnswer(_question.correctAnswer)
+                : _selectedOption == _question.correctAnswer;
 
     setState(() {
       _checked = true;
@@ -204,7 +212,13 @@ class _LessonScreenState extends State<LessonScreen> {
         } else {
           _correctCharacters.add(_question.character);
           if (_question.character.trim().isNotEmpty && _question.character.runes.length == 1) {
-            unawaited(TtsService.instance.speakChinese(_question.character.trim()));
+            final charObj = findCharacter(_question.character.trim());
+            final reading = (charObj != null && charObj.hanVietReading.trim().isNotEmpty)
+                ? charObj.hanVietReading.trim()
+                : (_question.type == QuestionType.reading ? _question.correctAnswer.trim() : '');
+            if (reading.isNotEmpty) {
+              unawaited(TtsService.instance.speakVietnamese(reading));
+            }
           }
         }
       }
@@ -337,6 +351,8 @@ class _LessonScreenState extends State<LessonScreen> {
         _isCorrect = false;
         _matchingMistakeCharged = false;
         _typingController.clear();
+        _writingStrokeCount = 0;
+        _writingCanvasKey.currentState?.clear();
       });
       return;
     }
@@ -483,6 +499,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       enabled: !_checked && widget.appState.hearts > 0,
                       supplementaryLanguage: widget.appState.supplementaryLanguage,
                       cjkCharacters: widget.appState.cjkCharacters,
+                      appState: widget.appState,
                       onSelected: (answer) {
                         if (!_checked) setState(() => _selectedOption = answer);
                       },
@@ -516,6 +533,8 @@ class _LessonScreenState extends State<LessonScreen> {
                         if (!_checked) setState(() => _selectedOption = answer);
                       },
                     )
+                  else if (question.type == QuestionType.writingPractice)
+                    _buildWritingPracticeQuestion(question, character)
                   else
                     Container(
                       constraints: const BoxConstraints(minHeight: 172),
@@ -594,6 +613,7 @@ class _LessonScreenState extends State<LessonScreen> {
                       onSubmitted: (_) { if (!_checked) _checkAnswer(); },
                     ),
                   ] else if (question.type != QuestionType.introduceWord &&
+                      question.type != QuestionType.writingPractice &&
                       question.type != QuestionType.typingSentenceMeaning &&
                       question.type != QuestionType.typingSentenceReading &&
                       question.type != QuestionType.fillInTheBlank &&
@@ -630,7 +650,9 @@ class _LessonScreenState extends State<LessonScreen> {
                     Icon(_isCorrect ? Icons.check_circle_rounded : Icons.auto_awesome_rounded, color: _isCorrect ? kGreen : kOrange, size: 28),
                     const SizedBox(width: 10),
                     Expanded(child: Text(
-                      question.type == QuestionType.typingSentenceReading
+                      question.type == QuestionType.writingPractice
+                          ? 'Rất tốt! Bạn đã luyện xong nét chữ “${question.character}”.'
+                          : question.type == QuestionType.typingSentenceReading
                           ? (_isCorrect
                               ? 'Chính xác! Âm Hán-Việt đúng.'
                               : 'Chưa đúng. Âm Hán-Việt chính xác: ${question.correctAnswer}')
@@ -685,10 +707,17 @@ class _LessonScreenState extends State<LessonScreen> {
                     style: ElevatedButton.styleFrom(backgroundColor: _checked ? (_isCorrect ? kGreen : kOrange) : kGreen, foregroundColor: Colors.white),
                     onPressed: _checked
                         ? _nextQuestion
-                        : (_selectedOption == null || _selectedOption!.trim().isEmpty ? null : _checkAnswer),
+                        : question.type == QuestionType.writingPractice
+                            ? () {
+                                setState(() => _selectedOption = '__writing_completed__');
+                                _checkAnswer();
+                              }
+                            : (_selectedOption == null || _selectedOption!.trim().isEmpty ? null : _checkAnswer),
                     child: Text(_checked
                       ? (_questionIndex == _questions.length - 1 ? 'Hoàn thành' : 'Tiếp tục')
-                      : question.type == QuestionType.typingSentenceReading
+                      : question.type == QuestionType.writingPractice
+                          ? (_writingStrokeCount > 0 ? 'Hoàn tất nét viết ➔ Tiếp tục' : 'Tập viết xong ➔ Tiếp tục')
+                          : question.type == QuestionType.typingSentenceReading
                           ? 'Kiểm tra âm Hán-Việt'
                           : question.type == QuestionType.typingSentenceMeaning
                           ? 'Kiểm tra bản dịch'
@@ -710,6 +739,177 @@ class _LessonScreenState extends State<LessonScreen> {
           ],
         ),
       ),
+    );
+  }
+  Widget _buildWritingPracticeQuestion(Question question, HanCharacter? character) {
+    final charSymbol = character?.character ?? question.associatedCharacter;
+    final reading = character?.hanVietReading ?? '';
+    final meaning = character?.meaning ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: kGreenLight,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFC9E2D0)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    charSymbol,
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: kGreen,
+                      fontFamilyFallback: ['NomNaTong', 'HanNomB'],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reading.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: kOrange,
+                        ),
+                      ),
+                      Text(
+                        meaning,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF263A2F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Thanh phát âm đa ngữ
+              MultilingualAudioBar(
+                character: character,
+                characterSymbol: charSymbol,
+                hanVietReading: reading,
+                appState: widget.appState,
+                compact: true,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: HanziCanvas(
+            key: _writingCanvasKey,
+            character: charSymbol,
+            size: 250,
+            templateOpacity: _writingTemplateOpacity,
+            onStrokeCountChanged: (count) {
+              setState(() {
+                _writingStrokeCount = count;
+                if (count > 0 && _selectedOption == null) {
+                  _selectedOption = '__writing_completed__';
+                }
+              });
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Center(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: kOrange,
+              side: const BorderSide(color: kOrange, width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            ),
+            onPressed: () {
+              final state = _writingCanvasKey.currentState;
+              if (state != null) {
+                if (state.isDemonstrating) {
+                  state.stopStrokeAnimation();
+                } else {
+                  state.playStrokeAnimation();
+                  if (_selectedOption == null) {
+                    setState(() => _selectedOption = '__writing_completed__');
+                  }
+                }
+                setState(() {});
+              }
+            },
+            icon: Icon(
+              _writingCanvasKey.currentState?.isDemonstrating == true
+                  ? Icons.pause_rounded
+                  : Icons.play_circle_filled_rounded,
+              size: 20,
+            ),
+            label: Text(
+              _writingCanvasKey.currentState?.isDemonstrating == true
+                  ? 'Dừng xem cách viết'
+                  : '▶️ Xem cách viết (Bút thuận)',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  if (_writingTemplateOpacity == 0.25) {
+                    _writingTemplateOpacity = 0.5;
+                  } else if (_writingTemplateOpacity == 0.5) {
+                    _writingTemplateOpacity = 0.0;
+                  } else {
+                    _writingTemplateOpacity = 0.25;
+                  }
+                });
+              },
+              icon: Icon(
+                _writingTemplateOpacity > 0 ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                size: 17,
+              ),
+              label: Text(
+                _writingTemplateOpacity == 0.0
+                    ? 'Mẫu: Ẩn'
+                    : _writingTemplateOpacity == 0.25
+                        ? 'Mẫu: Mờ'
+                        : 'Mẫu: Rõ',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: () => _writingCanvasKey.currentState?.undo(),
+              icon: const Icon(Icons.undo_rounded, size: 17),
+              label: const Text('Nét trước', style: TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: () => _writingCanvasKey.currentState?.clear(),
+              icon: const Icon(Icons.delete_outline_rounded, size: 17, color: kRed),
+              label: const Text('Xóa hết', style: TextStyle(fontSize: 12, color: kRed)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Center(
+          child: Text(
+            'Đã viết: $_writingStrokeCount nét • Dùng ngón tay/chuột để đồ theo nét chữ',
+            style: const TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
     );
   }
 }

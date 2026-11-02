@@ -3,6 +3,7 @@ enum QuestionType {
   reading,
   meaning,
   character,
+  writingPractice, // Luyện viết nét chữ trực tiếp trong bài học (có bút thuận và ô Mễ)
   fillInTheBlank,
   radical,
   typing,

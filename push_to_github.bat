@@ -11,10 +11,8 @@ echo.
 git add .
 git status
 echo.
-set /p "MSG=Nhap noi dung commit (Nhan Enter de dung mac dinh): "
-if "%MSG%"=="" (
-  set "MSG=feat: Them 4 tinh nang moi: Video Admob nap tim, But thuan hoat hoa, 3D Flashcard Anki va Mini-game 60s"
-)
+
+set "MSG=feat: Phat am mac dinh tieng Viet, nut nghe da ngu ke ben am Viet, luyen viet but thuan, 3D Flashcard, game 60s va video nap tim"
 
 git commit -m "%MSG%"
 echo.

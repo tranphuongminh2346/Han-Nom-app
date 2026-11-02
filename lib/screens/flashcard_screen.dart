@@ -8,6 +8,7 @@ import '../data/han_seed_data.dart';
 import '../data/models/cjk_character.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../widgets/multilingual_audio_bar.dart';
 import '../widgets/type_badge.dart';
 
 class FlashcardScreen extends StatefulWidget {
@@ -296,8 +297,8 @@ class _FlashcardScreenState extends State<FlashcardScreen> with SingleTickerProv
               TypeBadge(type: card.type, compact: true),
               IconButton(
                 icon: const Icon(Icons.volume_up_rounded, color: kGreen, size: 26),
-                tooltip: 'Nghe phát âm tiếng Trung',
-                onPressed: () => TtsService.instance.speakChinese(card.character),
+                tooltip: 'Nghe âm Hán-Việt',
+                onPressed: () => TtsService.instance.speakVietnamese(card.hanVietReading),
               ),
             ],
           ),
@@ -358,20 +359,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> with SingleTickerProv
                   card.character,
                   style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: kGreen, fontFamilyFallback: ['NomNaTong', 'HanNomB']),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.volume_down_rounded, color: kOrange, size: 22),
-                      tooltip: 'Nghe âm Hán-Việt',
-                      onPressed: () => TtsService.instance.speakVietnamese(card.hanVietReading),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.volume_up_rounded, color: kGreen, size: 22),
-                      tooltip: 'Nghe tiếng Trung',
-                      onPressed: () => TtsService.instance.speakChinese(card.character),
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.volume_up_rounded, color: kGreen, size: 24),
+                  tooltip: 'Nghe âm Hán-Việt',
+                  onPressed: () => TtsService.instance.speakVietnamese(card.hanVietReading),
                 ),
               ],
             ),
@@ -386,7 +377,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> with SingleTickerProv
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF20372C), height: 1.3),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            MultilingualAudioBar(
+              character: card,
+              appState: widget.appState,
+              compact: true,
+            ),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(

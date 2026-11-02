@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'core/cjk_catalogue.dart';
 import 'core/database/database_service.dart';
 import 'core/theme/app_colors.dart';
 import 'data/models/cjk_character.dart';
@@ -15,6 +16,7 @@ import 'widgets/stats_widgets.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await CjkCatalogue.init();
   await TtsService.instance.init();
   runApp(const HanVietApp());
 }
